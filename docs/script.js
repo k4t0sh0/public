@@ -104,7 +104,7 @@ const modalDescription = document.getElementById('modalDescription');
 const projectData = {
     1: {
         title: 'Chatly',
-        role: 'プロジェクトマネージャー',
+        role: 'Chatly',
         description: 'これは、学校で答えを教え会いたいという考えから作成されたものです。Firebaseを使用して、リアルタイムで通信できるようにしました。',
         mockup: 'book'
     },
