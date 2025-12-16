@@ -101,30 +101,43 @@ const modalTitle = document.getElementById('modalTitle');
 const modalRole = document.getElementById('modalRole');
 const modalDescription = document.getElementById('modalDescription');
 
+// プロジェクトデータ - ここを編集してください
 const projectData = {
     1: {
-        title: 'Chatly',
-        role: 'Chatly',
-        description: 'これは、学校で答えを教え会いたいという考えから作成されたものです。Firebaseを使用して、リアルタイムで通信できるようにしました。',
-        mockup: 'book'
+        title: 'プロジェクト名01',
+        role: 'プロジェクトマネージャー',
+        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。プロジェクトの詳細な説明をここに記載します。',
+        mockup: 'book',
+        period: '2024年1月 - 2024年6月',
+        tech: 'HTML, CSS, JavaScript, React',
+        scope: 'プロジェクト全体の管理、チームリーダー、要件定義'
     },
     2: {
         title: 'プロジェクト名02',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。また、文字の色やフォントを変更することもできます。プロジェクトの詳細な説明をここに記載します。',
-        mockup: 'desktop'
+        role: 'テクニカルリード',
+        description: 'これはプロジェクト02の詳細説明です。バックエンド開発を中心に担当しました。',
+        mockup: 'desktop',
+        period: '2023年9月 - 2024年3月',
+        tech: 'Python, Django, PostgreSQL, Docker',
+        scope: 'バックエンド開発、API設計、データベース設計'
     },
     3: {
         title: 'プロジェクト名03',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。また、文字の色やフォントを変更することもできます。プロジェクトの詳細な説明をここに記載します。',
-        mockup: 'phone'
+        role: 'UI/UXデザイナー',
+        description: 'これはプロジェクト03の詳細説明です。モバイルアプリのUI/UXを担当しました。',
+        mockup: 'phone',
+        period: '2024年4月 - 2024年8月',
+        tech: 'Figma, Adobe XD, React Native',
+        scope: 'UIデザイン、プロトタイプ作成、ユーザーテスト'
     },
     4: {
         title: 'プロジェクト名04',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。また、文字の色やフォントを変更することもできます。プロジェクトの詳細な説明をここに記載します。',
-        mockup: 'book'
+        role: 'フルスタック開発者',
+        description: 'これはプロジェクト04の詳細説明です。フロントエンドからバックエンドまで全て担当しました。',
+        mockup: 'book',
+        period: '2023年6月 - 2023年12月',
+        tech: 'Vue.js, Node.js, MongoDB, AWS',
+        scope: 'フロントエンド・バックエンド開発、インフラ構築'
     }
 };
 
@@ -155,10 +168,20 @@ projectCards.forEach(card => {
         const project = projectData[projectId];
         
         if (project) {
+            // タイトル、役割、説明を更新
             modalTitle.textContent = project.title;
             modalRole.textContent = project.role;
             modalDescription.textContent = project.description;
             modalImage.innerHTML = getMockupHTML(project.mockup);
+            
+            // 詳細情報（期間、使用技術、担当範囲）を更新
+            const detailValues = document.querySelectorAll('.modal-detail-value');
+            if (detailValues.length >= 3) {
+                detailValues[0].textContent = project.period || '2024年1月 - 2024年6月';
+                detailValues[1].textContent = project.tech || 'HTML, CSS, JavaScript';
+                detailValues[2].textContent = project.scope || 'プロジェクト全体の管理、デザイン監修';
+            }
+            
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
