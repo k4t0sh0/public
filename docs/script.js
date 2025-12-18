@@ -104,13 +104,13 @@ const modalDescription = document.getElementById('modalDescription');
 // プロジェクトデータ - ここを編集してください
 const projectData = {
     1: {
-        title: 'プロジェクト名01',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。プロジェクトの詳細な説明をここに記載します。',
+        title: 'Chatly',
+        role: 'Chatly',
+        description: 'これは、LINEのようなものです。',
         mockup: 'book',
         period: '2024年1月 - 2024年6月',
-        tech: 'HTML, CSS, JavaScript, React',
-        scope: 'プロジェクト全体の管理、チームリーダー、要件定義'
+        tech: 'HTML, CSS, JavaScript, Google Firebase（Firebaserealtime database）',
+        scope: ''
     },
     2: {
         title: 'プロジェクト名02',
