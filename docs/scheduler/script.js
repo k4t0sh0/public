@@ -542,7 +542,7 @@ function sendEmail() {
 
     const subject = encodeURIComponent('2-2');
     const body = encodeURIComponent(
-        `※これは自動送信です。` +
+        `※これは自動送信です。\n` +
         `📚 学校スケジュール\n\n` +
         `【時間割】\n` +
         scheduleData.map(p => `${p.period}時間目: ${p.subject} - ${p.description}`).join('\n') +
