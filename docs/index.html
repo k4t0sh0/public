@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私のホームページ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="image.ico" type="image/x-con">
+</head>
+
+<body>
+    <!-- サイドバー -->
+    <div id="sidebar">
+        <div class="inner">
+            <div class="logo">
+                <div class="logo-square"></div>
+                <div class="logo-text">k4t0sh0</div>
+                <div class="subtitle">初心者プログラマー</div>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-image"></div>
+                <div class="profile-name">かと<br>しょ</div>
+                <div class="profile-title">プログラマー</div>
+            </div>
+
+            <nav>
+                <a href="#home" class="nav-link">プロフィール</a>
+                <a href="#projects" class="nav-link">プロジェクト</a>
+                <a href="#resume" class="nav-link">履歴書</a>
+                <a href="#contact" class="nav-link">なんかの枠</a>
+            </nav>
+
+            <div class="social-links">
+                <a href="#" aria-label="Facebook">f</a>
+                <a href="#" aria-label="Twitter">𝕏</a>
+                <a href="#" aria-label="LinkedIn">in</a>
+                <a href="#" aria-label="Instagram">◉</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div id="main">
+        <!-- ホームセクション -->
+        <section id="home">
+            <div class="welcome-content">
+                <h1>こんにちは</h1>
+                <p class="welcome-subtitle">プロフィールと経歴をご覧ください</p>
+                <p class="content-text">わたしは、将来、ゲームクリエイター兼WEBデザイナーになりたい人です。そのため、今、プログラミング言語を学習中です。</p>
+                <p class="content-text">なので、できたものをここに提示したいと思います。これも、AIの力と自分のできるだけの力を使って作りました。</p>
+            </div>
+        </section>
+
+        <!-- プロジェクトセクション -->
+        <section id="projects">
+            <h2 class="section-header">プロジェクト</h2>
+            <p class="section-intro">
+                先ほど言った、私が作成した作品です。
+            </p>
+
+            <div class="projects-grid">
+                <div class="project-card" data-project="1">
+                    <div class="project-card-image">
+                        <div class="mockup-book"></div>
+                    </div>
+                    <div class="project-card-content">
+                        <div class="project-card-header">
+                            <div class="project-card-name">Chatly</div>
+                            <div class="project-card-role">メッセージングアプリ</div>
+                        </div>
+                        <p class="project-card-description">LINEのようなものを作りました。</p>
+                        <a href="#" class="detail-btn">詳細を見る</a>
+
+                        <a class="btn-project" href="https://k4t0sh0-chatly-app.netlify.app/" target="_blank"
+                            rel="noopener noreferrer">
+                            作成したプロジェクトへ行く
+                        </a>
+
+                    </div>
+                </div>
+
+                <div class="project-card" data-project="2">
+                    <div class="project-card-image">
+                        <div class="mockup-desktop">
+                            <div class="mockup-desktop-content">
+                                <div>POP</div>
+                                <div style="font-size: 20px; margin-top: -5px;">Up</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-card-content">
+                        <div class="project-card-header">
+                            <div class="project-card-name">Scheduler</div>
+                            <div class="project-card-role">時間割共有アプリ</div>
+                        </div>
+                        <p class="project-card-description">学校の時間割を、学校のパソコンから編集でき、シームレスに家のスマホへと転送されます。</p>
+                        <a href="#" class="detail-btn">詳細を見る</a>
+                        <a class="btn-project" href="scheduler/index.html" target="_blank"
+                            rel="noopener noreferrer">
+                            作成したプロジェクトへ行く
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 履歴書セクション -->
+        <section id="resume">
+            <h2 class="section-header">履歴書</h2>
+            <p class="section-intro">履歴書の内容をここに追加してください。学歴、職歴、スキルなどを記載しましょう。</p>
+        </section>
+
+        <!-- お問い合わせセクション -->
+        <section id="contact">
+            <h2 class="section-header">お問い合わせ</h2>
+            <p class="section-intro">お問い合わせフォームをここに追加してください。</p>
+        </section>
+
+        <!-- フッター -->
+        <footer id="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <div class="footer-links">
+                        <a href="#">プライバシーポリシー</a>
+                        <a href="#">Cookie(クッキー)ポリシー</a>
+                    </div>
+                </div>
+                <div class="footer-right">
+                    <div class="footer-contact-labels">
+                        <span>電話</span>
+                        <span>メール</span>
+                        <span>フォロー</span>
+                    </div>
+                    <div class="footer-contact-info">
+                        <span>12-3456-7890</span>
+                        <span>info@mysite.co.jp</span>
+                        <span>f 𝕏 in ◉</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- モーダル -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">×</button>
+            <div class="modal-body">
+                <div class="modal-image" id="modalImage"></div>
+                <div class="modal-info">
+                    <div class="modal-header">
+                        <div class="modal-title" id="modalTitle">プロジェクト名</div>
+                        <div class="modal-role" id="modalRole">役割名</div>
+                    </div>
+                    <p class="modal-description" id="modalDescription">プロジェクトの詳細説明がここに入ります。</p>
+                    <div class="modal-details">
+                        <div class="modal-detail-item">
+                            <div class="modal-detail-label">期間</div>
+                            <div class="modal-detail-value">2024年1月 - 2024年6月</div>
+                        </div>
+                        <div class="modal-detail-item">
+                            <div class="modal-detail-label">使用技術</div>
+                            <div class="modal-detail-value">HTML, CSS, JavaScript</div>
+                        </div>
+                        <div class="modal-detail-item">
+                            <div class="modal-detail-label">担当範囲</div>
+                            <div class="modal-detail-value">プロジェクト全体の管理、デザイン監修</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
