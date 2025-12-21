@@ -486,3 +486,69 @@ body {
     justify-content: center;
     gap: 8px;
 }
+
+.day-selector {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    justify-content: center;
+}
+
+.day-btn {
+    padding: 8px 20px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.day-btn:hover {
+    background: #f5f5f5;
+}
+
+.day-btn.active {
+    background: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+
+.day-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.day-selector {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    justify-content: center;
+}
+
+.day-btn {
+    padding: 8px 20px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.day-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+.day-btn.active {
+    background: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+
+.day-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

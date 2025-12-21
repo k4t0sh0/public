@@ -3,9 +3,20 @@ const dataRef = database.ref('schoolSchedule');
 const auth = firebase.auth();
 let currentUser = null;
 let isAnonymous = false;
+//現在の曜日のデータとして参照
 let scheduleData = [];
 let itemsData = [];
 let eventData = '';
+
+// script.js の冒頭部分を変更
+let currentDay = 'monday'; // 現在選択中の曜日を追跡
+let allScheduleData = {
+    monday: { schedule: [], items: [], event: '' },
+    tuesday: { schedule: [], items: [], event: '' },
+    wednesday: { schedule: [], items: [], event: '' },
+    thursday: { schedule: [], items: [], event: '' },
+    friday: { schedule: [], items: [], event: '' }
+};
 
 function init() {
     // 認証状態の監視
@@ -19,6 +30,130 @@ function init() {
             showAuth();
         }
     });
+}
+
+function loadData() {
+    if (!currentUser) return;
+
+    const dataRef = database.ref('schoolSchedule/shared');
+
+    dataRef.once('value', (snapshot) => {
+        const data = snapshot.val();
+
+        if (data && data.monday) {
+            // 新しい曜日別構造
+            allScheduleData = data;
+        } else if (data && data.schedule) {
+            // 古い構造からの移行
+            const defaultData = {
+                schedule: data.schedule || [],
+                items: data.items || [],
+                event: data.event || ''
+            };
+            // 全曜日に同じデータをコピー
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach(day => {
+                allScheduleData[day] = JSON.parse(JSON.stringify(defaultData));
+            });
+            if (!isAnonymous) {
+                // 新構造で保存
+                database.ref('schoolSchedule/shared').set(allScheduleData);
+            }
+        } else {
+            // 完全に新規の場合
+            initializeDefaultData();
+            // ↓ この行を追加（匿名でなければ保存）
+            if (!isAnonymous) {
+                database.ref('schoolSchedule/shared').set(allScheduleData);
+            }
+        }
+
+        loadCurrentDayData();
+        renderAll();
+    });
+
+    // リアルタイム更新
+    dataRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.monday) {
+            allScheduleData = data;
+            loadCurrentDayData();
+            renderAll();
+        }
+    });
+}
+
+// デフォルトデータの初期化
+function initializeDefaultData() {
+    const defaultSchedule = [
+        { period: 1, subject: '国語', description: '漢字テスト、物語文' },
+        { period: 2, subject: '算数', description: '分数のかけ算' },
+        { period: 3, subject: '理科', description: '植物の観察' },
+        { period: 4, subject: '社会', description: '日本の歴史' },
+        { period: 5, subject: '体育', description: 'マット運動' },
+        { period: 6, subject: '音楽', description: 'リコーダー' }
+    ];
+    const defaultItems = ['教科書', 'ノート', '筆記用具', '体育着', 'リコーダー', '給食セット'];
+    const defaultEvent = '明日は通常授業です。';
+
+    ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach(day => {
+        allScheduleData[day] = {
+            schedule: JSON.parse(JSON.stringify(defaultSchedule)),
+            items: [...defaultItems],
+            event: defaultEvent
+        };
+    });
+}
+
+// 現在の曜日のデータを読み込む
+// 現在の曜日のデータを読み込む
+function loadCurrentDayData() {
+    // ディープコピーで完全に独立させる
+    scheduleData = JSON.parse(JSON.stringify(allScheduleData[currentDay].schedule));
+    itemsData = [...allScheduleData[currentDay].items];
+    eventData = allScheduleData[currentDay].event;
+}
+
+// 曜日切り替え
+function switchDay(day) {
+    // 切り替え前に現在の曜日のデータを保存
+    allScheduleData[currentDay] = {
+        schedule: scheduleData,
+        items: itemsData,
+        event: eventData
+    };
+
+    currentDay = day;
+
+    // ボタンのアクティブ状態を更新
+    document.querySelectorAll('.day-btn').forEach(btn => {
+        btn.classList.remove('active');
+        // クリックされたボタンにactiveを追加
+        if (btn.textContent === getDayText(day)) {
+            btn.classList.add('active');
+        }
+    });
+
+    loadCurrentDayData();
+    renderAll();
+}
+
+// 曜日名を取得するヘルパー関数
+function getDayText(day) {
+    const dayMap = {
+        'monday': '月',
+        'tuesday': '火',
+        'wednesday': '水',
+        'thursday': '木',
+        'friday': '金'
+    };
+    return dayMap[day];
+}
+
+// 全体を再描画
+function renderAll() {
+    renderSchedule();
+    renderItems();
+    renderEvent();
 }
 
 // ログイン画面表示
@@ -46,45 +181,71 @@ function updateUserStatus() {
     }
 }
 
-// 権限に応じてUIを更新
-// 権限に応じてUIを更新
 function updateUIForPermissions() {
-    const editButtons = document.querySelectorAll('.edit-btn');
-    const emailBtn = document.getElementById('emailBtn');
 
-    editButtons.forEach(btn => {
+    // 少し待ってから取得
+    setTimeout(() => {
+        const editButtons = document.querySelectorAll('.edit-btn');
+        const emailBtn = document.getElementById('emailBtn');
+
+        console.log('編集ボタン数:', editButtons.length); // デバッグ用
+
         if (isAnonymous) {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
+            editButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            });
+
+            if (emailBtn) {
+                emailBtn.disabled = false;
+                emailBtn.style.opacity = '0.5';
+                emailBtn.style.cursor = 'not-allowed';
+            }
         }
-    });
 
-    if (emailBtn && isAnonymous) {
-        emailBtn.disabled = true;
-        emailBtn.style.opacity = '0.5';
-        emailBtn.style.cursor = 'not-allowed';
-    }
+        const dayButtons = document.querySelectorAll('.day-btn'); // 追加
 
-    // 既存の通知を削除してから追加（重複防止）
-    const existingNotice = document.querySelector('.readonly-notice');
-    if (existingNotice) {
-        existingNotice.remove();
-    }
+        if (isAnonymous) {
+            // 編集ボタンを無効化
+            editButtons.forEach(btn => {
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            });
 
-    if (isAnonymous) {
-        const notice = document.createElement('div');
-        notice.className = 'readonly-notice';
-        notice.innerHTML = '<span>📖</span><span>閲覧専用モードです。編集するにはアカウント登録してください。</span>';
+            // 曜日ボタンは閲覧可能(無効化しない) - 追加
+            dayButtons.forEach(btn => {
+                btn.disabled = false;
+            });
 
-        // left-columnの最初に追加
-        const leftColumn = document.querySelector('.left-column');
-        if (leftColumn && leftColumn.firstChild) {
-            leftColumn.insertBefore(notice, leftColumn.firstChild);
+            // メールボタンを無効化
+            if (emailBtn) {
+                emailBtn.disabled = true;
+                emailBtn.style.opacity = '0.5';
+                emailBtn.style.cursor = 'not-allowed';
+            }
         }
-    }
+
+        // ↓ ここから下は既存のコードをそのまま残す ↓
+
+        // 既存の通知を削除してから追加(重複防止)
+        const existingNotice = document.querySelector('.readonly-notice');
+        if (existingNotice) {
+            existingNotice.remove();
+        }
+
+        if (isAnonymous) {
+            const notice = document.createElement('div');
+            notice.className = 'readonly-notice';
+            notice.innerHTML = '<span>📖</span><span>閲覧専用モードです。編集するにはアカウント登録してください。</span>';
+
+            const leftColumn = document.querySelector('.left-column');
+            if (leftColumn && leftColumn.firstChild) {
+                leftColumn.insertBefore(notice, leftColumn.firstChild);
+            }
+        }
+    }, 100);
 }
-
 // ログイン（メール確認チェック付き）
 // ログイン（メール確認チェック付き）
 async function login() {
@@ -300,54 +461,6 @@ function displayDate() {
     document.getElementById('dateDisplay').textContent = today.toLocaleDateString('ja-JP', options);
 }
 
-function loadData() {
-    if (!currentUser) return;
-
-    // 共有データを読み込む（全員が閲覧可能）
-    const dataRef = database.ref('schoolSchedule/shared');
-
-    dataRef.once('value', (snapshot) => {  // ← 'on' を 'once' に変更
-        const data = snapshot.val();
-        if (data) {
-            scheduleData = data.schedule || [];
-            itemsData = data.items || [];
-            eventData = data.event || '';
-        } else {
-            // デフォルトデータ
-            scheduleData = [
-                { period: 1, subject: '国語', description: '漢字テスト、物語文' },
-                { period: 2, subject: '算数', description: '分数のかけ算' },
-                { period: 3, subject: '理科', description: '植物の観察' },
-                { period: 4, subject: '社会', description: '日本の歴史' },
-                { period: 5, subject: '体育', description: 'マット運動' },
-                { period: 6, subject: '音楽', description: 'リコーダー' }
-            ];
-            itemsData = ['教科書', 'ノート', '筆記用具', '体育着', 'リコーダー', '給食セット'];
-            eventData = '明日は通常授業です。';
-
-            if (!isAnonymous) {
-                saveData();
-            }
-        }
-        renderSchedule();
-        renderItems();
-        renderEvent();
-    });
-
-    // リアルタイム更新を監視（ループを防ぐため、saveDataは呼ばない）
-    dataRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            scheduleData = data.schedule || [];
-            itemsData = data.items || [];
-            eventData = data.event || '';
-            renderSchedule();
-            renderItems();
-            renderEvent();
-        }
-    });
-}
-
 // データ保存
 function saveData() {
     if (isAnonymous) {
@@ -355,13 +468,15 @@ function saveData() {
         return;
     }
 
-    const data = {
+    // 現在の曜日のデータを更新
+    allScheduleData[currentDay] = {
         schedule: scheduleData,
         items: itemsData,
         event: eventData
     };
 
-    database.ref('schoolSchedule/shared').set(data)
+    // 全曜日分を保存
+    database.ref('schoolSchedule/shared').set(allScheduleData)
         .then(() => console.log('保存成功'))
         .catch((error) => {
             console.error('保存失敗:', error);
@@ -389,9 +504,14 @@ function renderItems() {
 
 // 明日の予定表示
 function renderEvent() {
-    document.getElementById('eventBox').innerHTML = `<strong>📅 明日</strong>${eventData}`;
-}
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const month = tomorrow.getMonth() + 1;
+    const date = tomorrow.getDate();
 
+    document.getElementById('eventBox').innerHTML =
+        `<strong>📅 ${month}月${date}日の予定</strong><br>${eventData}`;
+}
 // スケジュール編集モーダルを開く
 function openScheduleModal() {
     const form = document.getElementById('scheduleForm');
@@ -538,12 +658,16 @@ function sendEmail() {
         return;
     }
 
-    const toEmail = 'mail.jouto@icloud.com'
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const month = tomorrow.getMonth() + 1;
+    const date = tomorrow.getDate();
 
+    const toEmail = 'mail.jouto@icloud.com';
     const subject = encodeURIComponent('2-2');
     const body = encodeURIComponent(
         `※これは自動送信です。\n` +
-        `📚 学校スケジュール\n\n` +
+        `【${month}月${date}日の予定】\n\n` +
         `【時間割】\n` +
         scheduleData.map(p => `${p.period}時間目: ${p.subject} - ${p.description}`).join('\n') +
         `\n\n【持ち物】\n` +
@@ -553,6 +677,5 @@ function sendEmail() {
 
     window.location.href = `mailto:${toEmail}?subject=${subject}&body=${body}`;
 }
-
 // 初期化実行
 init();

@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    
+
     <!-- ログイン画面 -->
     <div id="authScreen">
         <div class="auth-container">
@@ -37,7 +37,7 @@
                 <p>確認メールを送信しました。</p>
                 <p><strong id="verificationEmail"></strong></p>
                 <p>メール内のリンクをクリックして、メールアドレスを確認してください。</p>
-                
+
                 <div class="verification-actions">
                     <button onclick="checkEmailVerified()" class="verify-btn">
                         確認完了・ログイン
@@ -49,7 +49,7 @@
                         ログイン画面に戻る
                     </button>
                 </div>
-                
+
                 <div id="verificationMessage" class="info-message"></div>
             </div>
 
@@ -69,6 +69,17 @@
             <div class="header">
                 <h1>📚 学校スケジュール</h1>
                 <div class="date-display" id="dateDisplay"></div>
+
+                <!-- 曜日ボタン -->
+                <div class="day-selector">
+                    <button class="day-btn active" onclick="switchDay('monday')">月</button>
+                    <button class="day-btn" onclick="switchDay('tuesday')">火</button>
+                    <button class="day-btn" onclick="switchDay('wednesday')">水</button>
+                    <button class="day-btn" onclick="switchDay('thursday')">木</button>
+                    <button class="day-btn" onclick="switchDay('friday')">金</button>
+                </div>
+
+                <!-- ユーザー情報 -->
                 <div class="user-info">
                     <span id="userStatus"></span>
                     <button onclick="sendEmail()" id="emailBtn" class="email-btn">📧 メール送信</button>
@@ -76,6 +87,7 @@
                 </div>
             </div>
 
+            <!-- .contentを.containerの中に入れる -->
             <div class="content">
                 <div class="left-column">
                     <div class="section schedule-section">
@@ -109,7 +121,9 @@
                 </div>
             </div>
         </div>
+        <!-- ↑ .container の終了 -->
 
+        <!-- モーダルは.containerの外、.appScreenの中 -->
         <!-- スケジュール編集モーダル -->
         <div id="scheduleModal" class="modal">
             <div class="modal-content">
@@ -186,7 +200,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
