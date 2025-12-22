@@ -5,10 +5,15 @@
 }
 
 body {
-    font-family: 'Hiragino Sans', 'Yu Gothic', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
+    background-color: #faf9f6;
+    /* ややアイボリー */
+    background-image:
+        repeating-linear-gradient(0deg,
+            rgba(0, 0, 0, 0.015),
+            rgba(0, 0, 0, 0.015) 1px,
+            transparent 1px,
+            transparent 3px);
+    color: #333;
 }
 
 .container {
@@ -93,11 +98,15 @@ body {
 }
 
 .left-column,
-.right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.right-column,
+.app-container {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 14px;
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.08),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
+
 
 .section {
     background: #f8f9fa;
@@ -149,12 +158,13 @@ body {
 }
 
 .period-card {
-    background: white;
-    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    border-left: 4px solid #667eea;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.06),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
+
 
 .period-number {
     font-size: 0.9em;
@@ -551,4 +561,60 @@ body {
 .day-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* ===== 共通フォームデザイン ===== */
+.form-group select,
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 8px 10px;
+    font-size: 14px;
+
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* フォーカス時 */
+.form-group select:focus,
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    border-color: #90caf9;
+    box-shadow: 0 0 0 2px rgba(144, 202, 249, 0.25);
+}
+
+/* select 特有の見た目を整える */
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #666 50%),
+        linear-gradient(135deg, #666 50%, transparent 50%);
+    background-position:
+        calc(100% - 16px) 50%,
+        calc(100% - 10px) 50%;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.period-card {
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.form-group select {
+    color: #333;
+    font-weight: 500;
+}
+
+#allBulkModal .form-group>div {
+    align-items: center;
 }

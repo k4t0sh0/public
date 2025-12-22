@@ -18,6 +18,32 @@ let allScheduleData = {
     friday: { schedule: [], items: [], event: '' }
 };
 
+const SUBJECT_LIST = [
+    '国語', '数学', '英語', '理科', '社会', '体育',
+    '音楽', '美術', '技術', '家庭科', '総合', '学活', '委員会', 'なし'
+];
+
+const SUBJECT_COLORS = {
+    '国語': '#fdecea',        // パステル赤
+    '数学': '#e3f2fd',        // パステル青
+    '英語': '#ede7f6',        // パステル紫
+    '理科': '#e8f5e9',        // パステル緑
+    '社会': '#fff3e0',        // パステル橙
+    '体育': '#fffde7',        // パステル黄
+    '音楽': '#fce4ec',        // パステルピンク
+    '美術': '#fbe9e7',        // 赤〜橙（赤紫寄り）
+    '技術': '#ffe0b2',        // オレンジ
+    '家庭科': '#ffe0b2',      // オレンジ
+    '総合': '#e1f5fe',        // 水色
+    '学活': '#e1f5fe',        // 水色
+    '委員会': '#f1f8e9',      // 黄緑
+    'なし': '#ffffff'
+};
+
+
+
+
+
 function init() {
     // 認証状態の監視
     auth.onAuthStateChanged(user => {
@@ -109,7 +135,10 @@ function initializeDefaultData() {
 function loadCurrentDayData() {
     // ディープコピーで完全に独立させる
     scheduleData = JSON.parse(JSON.stringify(allScheduleData[currentDay].schedule));
-    itemsData = [...allScheduleData[currentDay].items];
+    itemsData = Array.isArray(allScheduleData[currentDay].items)
+        ? [...allScheduleData[currentDay].items]
+        : [];
+
     eventData = allScheduleData[currentDay].event;
 }
 
@@ -487,14 +516,20 @@ function saveData() {
 // スケジュール表示
 function renderSchedule() {
     const container = document.getElementById('scheduleList');
-    container.innerHTML = scheduleData.map(period => `
-                <div class="period-card">
-                    <div class="period-number">${period.period}時間目</div>
-                    <div class="subject">${period.subject}</div>
-                    <div class="description">${period.description}</div>
-                </div>
-            `).join('');
+
+    container.innerHTML = scheduleData.map(period => {
+        const bgColor = SUBJECT_COLORS[period.subject] || '#ffffff';
+
+        return `
+            <div class="period-card" style="background:${bgColor}">
+                <div class="period-number">${period.period}時間目</div>
+                <div class="subject">${period.subject}</div>
+                <div class="description">${period.description}</div>
+            </div>
+        `;
+    }).join('');
 }
+
 
 // 持ち物表示
 function renderItems() {
@@ -512,23 +547,37 @@ function renderEvent() {
     document.getElementById('eventBox').innerHTML =
         `<strong>📅 ${month}月${date}日の予定</strong><br>${eventData}`;
 }
-// スケジュール編集モーダルを開く
+
 function openScheduleModal() {
     const form = document.getElementById('scheduleForm');
-    // openScheduleModal() 内
+
     form.innerHTML = `
-<div class="schedule-edit-grid">
-${scheduleData.map((period, index) => `
-    <div class="form-group">
-        <label>${period.period}時間目</label>
-        <input type="text" id="subject${index}" value="${period.subject}">
-        <input type="text" id="desc${index}" value="${period.description}" style="margin-top:6px;">
-    </div>
-`).join('')}
-</div>
-`;
+        <div class="schedule-edit-grid">
+        ${scheduleData.map((period, index) => `
+            <div class="form-group">
+                <label>${period.period}時間目</label>
+
+                <select id="subject${index}"
+                    style="background:${SUBJECT_COLORS[period.subject] || '#fff'}"
+                    onchange="this.style.backgroundColor = SUBJECT_COLORS[this.value]">
+                    ${SUBJECT_LIST.map(sub =>
+        `<option value="${sub}" ${sub === period.subject ? 'selected' : ''}>${sub}</option>`
+    ).join('')}
+                </select>
+
+                <input type="text"
+                    id="desc${index}"
+                    value="${period.description}"
+                    style="margin-top:6px;">
+            </div>
+        `).join('')}
+        </div>
+    `;
+
     document.getElementById('scheduleModal').style.display = 'flex';
 }
+
+
 
 // 持ち物編集モーダルを開く
 function openItemsModal() {
@@ -596,23 +645,40 @@ window.onclick = function (event) {
 }
 
 function openAllBulkModal() {
+    const body = document.querySelector('#allBulkModal .modal-body');
 
-    // 時間割
-    document.getElementById('bulkScheduleInput').value =
-        scheduleData.map(p =>
-            `${p.period}限 ${p.subject} ${p.description}`
-        ).join('\n');
+    body.innerHTML = `
+        <div class="form-group">
+            <label>📖 時間割（選択式）</label>
+            ${scheduleData.map((p, i) => `
+                <div style="display:flex; gap:8px; margin-bottom:6px;">
+                    <span style="width:50px">${p.period}限</span>
+                    <select id="bulkSubject${i}"
+                        style="flex:1; background:${SUBJECT_COLORS[p.subject] || '#fff'}"
+                        onchange="this.style.backgroundColor = SUBJECT_COLORS[this.value]">
+                        ${SUBJECT_LIST.map(sub =>
+        `<option value="${sub}" ${sub === p.subject ? 'selected' : ''}>${sub}</option>`
+    ).join('')}
+                    </select>
+                    <input type="text" id="bulkDesc${i}" value="${p.description}" style="flex:2;">
+                </div>
+            `).join('')}
+        </div>
 
-    // 持ち物
-    document.getElementById('bulkItemsInput').value =
-        itemsData.join('\n');
+        <div class="form-group">
+            <label>🎒 持ち物</label>
+            <textarea id="bulkItemsInput" rows="5">${itemsData.join('\n')}</textarea>
+        </div>
 
-    // 明日の予定
-    document.getElementById('bulkEventInput').value =
-        eventData;
+        <div class="form-group">
+            <label>🗓️ 明日の予定</label>
+            <textarea id="bulkEventInput" rows="4">${eventData}</textarea>
+        </div>
+    `;
 
     document.getElementById('allBulkModal').style.display = 'flex';
 }
+
 
 function saveAllBulk() {
     if (isAnonymous) {
@@ -620,37 +686,25 @@ function saveAllBulk() {
         return;
     }
 
-    /* ===== 時間割 ===== */
-    const scheduleLines =
-        document.getElementById('bulkScheduleInput').value
-            .split('\n')
-            .filter(l => l.trim() !== '');
+    scheduleData = scheduleData.map((p, i) => ({
+        period: p.period,
+        subject: document.getElementById(`bulkSubject${i}`).value,
+        description: document.getElementById(`bulkDesc${i}`).value
+    }));
 
-    scheduleData = scheduleLines.map((line, index) => {
-        const parts = line.split(' ');
-        return {
-            period: index + 1,
-            subject: parts[1] || '',
-            description: parts.slice(2).join(' ') || ''
-        };
-    });
+    itemsData = document.getElementById('bulkItemsInput').value
+        .split('\n')
+        .map(i => i.trim())
+        .filter(i => i !== '');
 
-    /* ===== 持ち物 ===== */
-    itemsData =
-        document.getElementById('bulkItemsInput').value
-            .split('\n')
-            .filter(i => i.trim() !== '');
 
-    /* ===== 明日の予定 ===== */
-    eventData =
-        document.getElementById('bulkEventInput').value;
+    eventData = document.getElementById('bulkEventInput').value;
 
     saveData();
-    renderSchedule();
-    renderItems();
-    renderEvent();
+    renderAll();
     closeModal('allBulkModal');
 }
+
 
 function sendEmail() {
     if (isAnonymous) {
