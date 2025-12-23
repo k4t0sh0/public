@@ -20,7 +20,7 @@ let allScheduleData = {
 
 const SUBJECT_LIST = [
     '国語', '数学', '英語', '理科', '社会', '体育',
-    '音楽', '美術', '技術', '家庭科', '総合', '学活', '委員会', 'なし'
+    '音楽', '美術', '技術', '家庭科', '総合', '学活', '道徳', '委員会', 'なし'
 ];
 
 const SUBJECT_COLORS = {
@@ -36,6 +36,7 @@ const SUBJECT_COLORS = {
     '家庭科': '#ffe0b2',      // オレンジ
     '総合': '#e1f5fe',        // 水色
     '学活': '#e1f5fe',        // 水色
+    '道徳': '#e1f5fe',        // 水色
     '委員会': '#f1f8e9',      // 黄緑
     'なし': '#ffffff'
 };
@@ -717,19 +718,26 @@ function sendEmail() {
     const month = tomorrow.getMonth() + 1;
     const date = tomorrow.getDate();
 
+    // 数字を丸数字に変換する関数
+    const toCircledNumber = (num) => {
+        const circled = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
+        return circled[num - 1] || num;
+    };
+
     const toEmail = 'mail.jouto@icloud.com';
     const subject = encodeURIComponent('2-2');
     const body = encodeURIComponent(
         `※これは自動送信です。\n` +
         `【${month}月${date}日の予定】\n\n` +
         `【時間割】\n` +
-        scheduleData.map(p => `${p.period}時間目: ${p.subject} - ${p.description}`).join('\n') +
+        scheduleData.map(p => `${toCircledNumber(p.period)}${p.subject} - ${p.description}`).join('\n') +
         `\n\n【持ち物】\n` +
         itemsData.map(item => `・${item}`).join('\n') +
-        `\n\n【明日の予定】\n${eventData}`
+        `\n\n【ホワイトボード】\n${eventData}`
     );
 
     window.location.href = `mailto:${toEmail}?subject=${subject}&body=${body}`;
 }
+
 // 初期化実行
 init();
