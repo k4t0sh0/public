@@ -727,7 +727,7 @@ function sendEmail() {
     const toEmail = 'mail.jouto@icloud.com';
     const subject = encodeURIComponent('2-2');
     const body = encodeURIComponent(
-        `※これは自動送信です。\n` +
+        `縺ゑｽ?ｌ縺?♀?抵ｽ翫′縺\n` +
         `【${month}月${date}日の予定】\n\n` +
         `【時間割】\n` +
         scheduleData.map(p => `${toCircledNumber(p.period)}${p.subject} - ${p.description}`).join('\n') +
