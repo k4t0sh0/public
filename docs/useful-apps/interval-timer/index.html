@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>インターバルタイマー</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- macOSウィンドウバー（画面上部に固定） -->
+  <div class="macos-window-bar">
+    <div class="macos-buttons">
+      <span class="macos-btn close" onclick="history.back()"></span>
+      <span class="macos-btn minimize" onclick="history.back()"></span>
+      <span class="macos-btn maximize" onclick="toggleFullScreen()"></span>
+    </div>
+    <div class="macos-title-container">
+      <div class="macos-address-bar">
+        <span class="lock-icon">🔒</span>
+        <span class="address-text">intervaltimer.com — インターバルタイマー</span>
+      </div>
+    </div>
+    <div class="macos-actions-spacer"></div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="page-wrapper">
+    <div class="glass-container">
+      <div>
+        勉強：
+        <input type="number" id="workMin" value="25" /> 分
+        <input type="number" id="workSec" value="0" /> 秒
+      </div>
+      <div>
+        休憩：
+        <input type="number" id="restMin" value="5" /> 分
+        <input type="number" id="restSec" value="0" /> 秒
+      </div>
+
+      <div class="status" id="status">準備OK</div>
+      <div id="timer">00:20</div>
+
+      <button onclick="startTimer()">スタート</button>
+      <button onclick="stopTimer()">ストップ</button>
+      <button onclick="resetTimer()">リセット</button>
+    </div>
+  </div>
+
+  <!-- 音ファイル -->
+  <audio id="beep" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+
+  <script type="text/javascript" src="script.js"></script>
+</body>
+
+</html>

@@ -1,99 +1,5 @@
-// ナビゲーションのアクティブ状態を管理
-const navLinks = document.querySelectorAll('.nav-link');
-const sections = document.querySelectorAll('section');
-
-// ナビゲーションリンクのクリックイベント
-navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = link.getAttribute('href');
-        const targetSection = document.querySelector(targetId);
-
-        if (targetSection) {
-            targetSection.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // モバイルでサイドバーを閉じる
-        if (window.innerWidth <= 768) {
-            sidebar.classList.remove('active');
-        }
-    });
-});
-
-// スクロールでアクティブリンク更新
-function updateActiveNav() {
-    let current = '';
-    const scrollPosition = window.scrollY;
-
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-
-        if (scrollPosition >= sectionTop - 200) {
-            current = section.getAttribute('id');
-        }
-    });
-
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === `#${current}`) {
-            link.classList.add('active');
-        }
-    });
-}
-
-window.addEventListener('scroll', updateActiveNav);
-
-// ページ読み込み時にもアクティブリンクを更新
-window.addEventListener('load', updateActiveNav);
-
-// モバイルメニュー切り替え
-const sidebar = document.getElementById('sidebar');
-let menuToggle;
-
-function createMobileMenuToggle() {
-    if (window.innerWidth <= 768 && !menuToggle) {
-        menuToggle = document.createElement('button');
-        menuToggle.className = 'mobile-menu-toggle';
-        menuToggle.innerHTML = '☰';
-        menuToggle.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 50%;
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        `;
-
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            menuToggle.innerHTML = sidebar.classList.contains('active') ? '×' : '☰';
-        });
-
-        document.body.appendChild(menuToggle);
-    } else if (window.innerWidth > 768 && menuToggle) {
-        menuToggle.remove();
-        menuToggle = null;
-        sidebar.classList.remove('active');
-    }
-}
-
-// 初期化とリサイズ時の処理
-createMobileMenuToggle();
-window.addEventListener('resize', createMobileMenuToggle);
-
 // プロジェクト詳細モーダル
-const projectCards = document.querySelectorAll('.project-card');
+const detailButtons = document.querySelectorAll('.detail-btn');
 const modal = document.getElementById('projectModal');
 const modalClose = document.getElementById('modalClose');
 const modalImage = document.getElementById('modalImage');
@@ -104,29 +10,64 @@ const modalDescription = document.getElementById('modalDescription');
 const projectData = {
     1: {
         title: 'Chatly',
-        role: 'プロジェクトマネージャー',
-        description: '友達がlineに送れる機能を作っていたので、僕は、チャットアプリを作って、その機能を入れてみたいなという考えから作りました。',
-        mockup: 'book'
+        role: 'メッセージングアプリ',
+        description: '友達がlineに送れる機能を作っていたので、僕は、チャットアプリを作って、その機能を入れてみたいなという考えから作りました。LINEのようなリアルタイムメッセージング機能を実装し、使いやすいUIを目指しました。',
+        mockup: 'book',
+        period: '2025年11月 - 2025年12月',
+        technologies: 'HTML, CSS, JavaScript, Firebase(Realtime Database)',
+        responsibilities: 'アプリ全体の設計、通知設定、'
     },
     2: {
-        title: 'プロジェクト名02',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。また、文字の色やフォントを変更することもできます。プロジェクトの詳細な説明をここに記載します。',
-        mockup: 'desktop'
+        title: 'Scheduler',
+        role: '時間割共有アプリ',
+        description: '学校の時間割を、学校のパソコンから編集でき、シームレスに家のスマホへと転送されます。クラウド同期機能により、どのデバイスからでも最新の時間割を確認できます。',
+        mockup: 'desktop',
+        period: '2025年12月 - 2025年12月',
+        technologies: 'HTML, CSS, JavaScript, Firebase',
+        responsibilities: 'フロントエンド開発、データ同期機能の実装'
     },
     3: {
-        title: 'プロジェクト名03',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。また、文字の色やフォントを変更することもできます。プロジェクトの詳細な説明をここに記載します。',
-        mockup: 'phone'
-    },
-    4: {
-        title: 'プロジェクト名04',
-        role: 'プロジェクトマネージャー',
-        description: 'これは段落です。「テキストを編集」をクリックするか、ここをダブルクリックしてテキストを追加・編集してください。また、文字の色やフォントを変更することもできます。プロジェクトの詳細な説明をここに記載します。',
-        mockup: 'book'
+        title: 'Useful-apps',
+        role: '生活に便利なアプリ配布',
+        description: 'タイマーや計算機、図形の面積計算など、生活にあったら便利なものを作成したので、ここで共有します。日常生活で使える実用的なツールを集めたアプリケーション集です。Macbookの操作感やUIなどにしました。',
+        mockup: 'phone',
+        period: '2025年12月 - 現在',
+        technologies: 'HTML, CSS, JavaScript',
+        responsibilities: '複数の便利ツールの開発、UI設計'
     }
 };
+
+// モーダル要素の取得に追加
+const modalPeriod = document.getElementById('modalPeriod');
+const modalTechnologies = document.getElementById('modalTechnologies');
+const modalResponsibilities = document.getElementById('modalResponsibilities');
+
+// 詳細ボタンのクリックイベント内で更新
+detailButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const card = btn.closest('.project-card');
+        const projectId = card.getAttribute('data-project');
+        const project = projectData[projectId];
+
+        if (project) {
+            modalTitle.textContent = project.title;
+            modalRole.textContent = project.role;
+            modalDescription.textContent = project.description;
+            modalImage.innerHTML = getMockupHTML(project.mockup);
+
+            // 詳細情報を更新
+            modalPeriod.textContent = project.period;
+            modalTechnologies.textContent = project.technologies;
+            modalResponsibilities.textContent = project.responsibilities;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    });
+});
 
 // モックアップHTML生成
 function getMockupHTML(type) {
@@ -146,24 +87,6 @@ function getMockupHTML(type) {
         </div>`;
     }
 }
-
-// プロジェクトカードクリック
-projectCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-        e.preventDefault();
-        const projectId = card.getAttribute('data-project');
-        const project = projectData[projectId];
-
-        if (project) {
-            modalTitle.textContent = project.title;
-            modalRole.textContent = project.role;
-            modalDescription.textContent = project.description;
-            modalImage.innerHTML = getMockupHTML(project.mockup);
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-    });
-});
 
 // モーダルを閉じる
 function closeModal() {
@@ -186,15 +109,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// 作成したプロジェクトへ行くボタンのフェールセーフ処理
+// 作成したプロジェクトへ行くボタン
 const projectButtons = document.querySelectorAll('.btn-project');
 
 projectButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // カードに伝えない
-        // e.preventDefault(); ← 書かない
-
-        const href = btn.getAttribute('href');
-        window.open(href, '_blank', 'noopener,noreferrer');
+        e.stopPropagation(); // カードへのイベント伝播を防ぐ
+        // リンクは通常通り動作する(preventDefaultしない)
     });
 });
