@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mind Map</title>
 
     <style>
@@ -11,7 +12,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         #app {
@@ -21,7 +22,6 @@
             background: white;
         }
 
-        /* パネル共通 */
         .panel {
             position: absolute;
             background: white;
@@ -39,6 +39,11 @@
             cursor: pointer;
             color: white;
             font-size: 13px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            opacity: 0.9;
         }
 
         svg {
@@ -47,7 +52,10 @@
             cursor: grab;
         }
 
-        /* Finder全画面 */
+        svg:active {
+            cursor: grabbing;
+        }
+
         #finderOverlay {
             position: fixed;
             inset: 0;
@@ -59,12 +67,10 @@
             flex-direction: column;
         }
 
-        /* 表示中 */
         #finderOverlay.show {
             transform: translateX(0);
         }
 
-        /* ヘッダー */
         #finderHeader {
             height: 48px;
             background: white;
@@ -76,14 +82,12 @@
             font-weight: bold;
         }
 
-        /* カラム本体 */
         #columns {
             flex: 1;
             overflow-x: auto;
             white-space: nowrap;
         }
 
-        /* カラムボタン */
         #finderBtn {
             position: absolute;
             bottom: 24px;
@@ -95,6 +99,33 @@
             padding: 10px 16px;
             font-size: 14px;
         }
+
+        .breadcrumb-item {
+            display: inline;
+            color: #4b5563;
+            cursor: pointer;
+        }
+
+        .breadcrumb-item:hover {
+            color: #1f2937;
+        }
+
+        .column-item {
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .column-item:hover {
+            background: #f3f4f6;
+        }
+
+        .column-item.selected {
+            background: #c7d2fe;
+        }
     </style>
 </head>
 
@@ -103,10 +134,14 @@
 
         <!-- 右上ズーム -->
         <div class="panel" style="top:16px;right:16px;display:flex;gap:4px">
-            <button style="background:#64748b" onclick="zoomIn()">＋</button>
-            <button style="background:#64748b" onclick="zoomOut()">－</button>
+            <button style="background:#64748b" onclick="zoomIn()">+</button>
+            <button style="background:#64748b" onclick="zoomOut()">−</button>
             <button style="background:#64748b" onclick="resetView()">⟳</button>
+            <button style="background:#3b82f6" onclick="exportData()">↓</button>
+            <button style="background:#10b981" onclick="document.getElementById('importFile').click()">↑</button>
         </div>
+
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
 
         <!-- SVG -->
         <svg id="svg">
@@ -134,7 +169,7 @@
         <div id="finderOverlay">
             <div id="finderHeader">
                 <span>ノード一覧</span>
-                <button onclick="toggleFinder()">×</button>
+                <button onclick="toggleFinder()" style="background:#64748b">×</button>
             </div>
             <div id="columns"></div>
         </div>
@@ -142,11 +177,9 @@
         <!-- Finder表示ボタン -->
         <button id="finderBtn" onclick="toggleFinder()">一覧</button>
 
-
     </div>
 
     <script>
-        /* ===== 状態 ===== */
         const colors = ['#6366f1', '#22c55e', '#ef4444', '#f59e0b', '#06b6d4'];
 
         let nodes = [{
@@ -167,10 +200,7 @@
         let zoom = 1;
         let draggingCanvas = false;
         let dragStart = { x: 0, y: 0 };
-        let editingNode = null;
-
         let finderSelectedNode = null;
-
 
         const svg = document.getElementById('svg');
         const view = document.getElementById('view');
@@ -178,7 +208,26 @@
         const deleteBtn = document.getElementById('deleteBtn');
         const breadcrumb = document.getElementById('breadcrumb');
 
-        /* ===== 描画 ===== */
+        function wrapText(text, maxChars) {
+            const lines = [];
+            let currentLine = '';
+
+            for (let i = 0; i < text.length; i++) {
+                if (currentLine.length >= maxChars) {
+                    lines.push(currentLine);
+                    currentLine = text[i];
+                } else {
+                    currentLine += text[i];
+                }
+            }
+
+            if (currentLine.length > 0) {
+                lines.push(currentLine);
+            }
+
+            return lines.length > 0 ? lines : [''];
+        }
+
         function draw() {
             view.innerHTML = '';
 
@@ -189,8 +238,8 @@
                 if (!p) return;
 
                 const isRight = n.x > p.x;
-                const sp = p.isRoot ? 70 : 10;
-                const ep = n.isRoot ? 70 : 10;
+                const sp = p.isRoot ? 70 : 70;
+                const ep = n.isRoot ? 70 : 70;
 
                 const sx = isRight ? p.x + sp : p.x - sp;
                 const ex = isRight ? n.x - ep : n.x + ep;
@@ -198,9 +247,9 @@
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d',
                     `M ${sx} ${p.y}
-       C ${(sx + ex) / 2} ${p.y},
-         ${(sx + ex) / 2} ${n.y},
-         ${ex} ${n.y}`
+                     C ${(sx + ex) / 2} ${p.y},
+                       ${(sx + ex) / 2} ${n.y},
+                       ${ex} ${n.y}`
                 );
                 path.setAttribute('stroke', '#cbd5e1');
                 path.setAttribute('stroke-width', '2');
@@ -219,7 +268,6 @@
             );
         }
 
-        /* ===== ノード描画 ===== */
         function drawRoot(n) {
             const e = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
             e.setAttribute('cx', n.x);
@@ -229,48 +277,73 @@
             e.setAttribute('fill', n.color);
             e.setAttribute('stroke', selectedNode === n.id ? '#1e293b' : 'white');
             e.setAttribute('stroke-width', selectedNode === n.id ? 3 : 2);
+            e.style.cursor = 'pointer';
+            e.style.filter = 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15))';
             e.onmousedown = ev => startNodeDrag(ev, n);
             view.appendChild(e);
-            drawText(n, 'white', true);
+
+            const lines = wrapText(n.text, 10);
+            lines.forEach((line, i) => {
+                const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('x', n.x);
+                t.setAttribute('y', n.y - (lines.length - 1) * 10 + i * 20);
+                t.setAttribute('text-anchor', 'middle');
+                t.setAttribute('dominant-baseline', 'middle');
+                t.setAttribute('fill', 'white');
+                t.setAttribute('font-size', '14');
+                t.setAttribute('font-weight', 'bold');
+                t.style.pointerEvents = 'none';
+                t.textContent = line;
+                view.appendChild(t);
+            });
         }
 
         function drawNode(n) {
+            const lines = wrapText(n.text, 12);
+            const lineHeight = 20;
+            const padding = 16;
+            const height = lines.length * lineHeight + padding * 2;
+            const width = 140;
+
             const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            r.setAttribute('x', n.x - 70);
-            r.setAttribute('y', n.y - 30);
-            r.setAttribute('width', 140);
-            r.setAttribute('height', 60);
+            r.setAttribute('x', n.x - width / 2);
+            r.setAttribute('y', n.y - height / 2);
+            r.setAttribute('width', width);
+            r.setAttribute('height', height);
             r.setAttribute('rx', 8);
             r.setAttribute('fill', 'white');
             r.setAttribute('stroke', n.color);
             r.setAttribute('stroke-width', 2);
+            r.style.cursor = 'pointer';
+            r.style.filter = selectedNode === n.id
+                ? 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2))'
+                : 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.1))';
             r.onmousedown = ev => startNodeDrag(ev, n);
             view.appendChild(r);
-            drawText(n, n.color, false);
+
+            lines.forEach((line, i) => {
+                const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('x', n.x);
+                t.setAttribute('y', n.y - (lines.length - 1) * lineHeight / 2 + i * lineHeight);
+                t.setAttribute('text-anchor', 'middle');
+                t.setAttribute('dominant-baseline', 'middle');
+                t.setAttribute('fill', n.color);
+                t.setAttribute('font-size', '14');
+                t.setAttribute('font-weight', '500');
+                t.style.pointerEvents = 'none';
+                t.textContent = line;
+                view.appendChild(t);
+            });
         }
 
-        function drawText(n, color, bold) {
-            const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            t.setAttribute('x', n.x);
-            t.setAttribute('y', n.y);
-            t.setAttribute('text-anchor', 'middle');
-            t.setAttribute('dominant-baseline', 'middle');
-            t.setAttribute('fill', color);
-            t.style.fontWeight = bold ? 'bold' : 'normal';
-            t.textContent = n.text;
-            view.appendChild(t);
-        }
-
-        /* ===== 選択 ===== */
         function selectNode(id) {
             selectedNode = id;
             actions.style.display = 'flex';
             deleteBtn.style.display = id === 1 ? 'none' : 'inline-block';
             updateBreadcrumb();
-            updateColumns();   // ← 追加
+            updateColumns();
             draw();
         }
-
 
         function saveData() {
             localStorage.setItem('mindmap-nodes', JSON.stringify(nodes));
@@ -282,15 +355,12 @@
 
             try {
                 nodes = JSON.parse(data);
-
-                // 次のIDを復元（重要）
                 nextId = Math.max(...nodes.map(n => n.id)) + 1;
             } catch {
-                // 壊れていたら何もしない
+                // エラー時は何もしない
             }
         }
 
-        /* ===== パンくず ===== */
         function updateBreadcrumb() {
             breadcrumb.innerHTML = '';
             breadcrumb.style.display = 'block';
@@ -304,8 +374,8 @@
 
             list.forEach((n, i) => {
                 const span = document.createElement('span');
+                span.className = 'breadcrumb-item';
                 span.textContent = n.text.length > 15 ? n.text.slice(0, 15) + '…' : n.text;
-                span.style.cursor = 'pointer';
                 span.onclick = () => selectNode(n.id);
                 breadcrumb.appendChild(span);
                 if (i < list.length - 1) {
@@ -314,7 +384,6 @@
             });
         }
 
-        /* ===== Finderカラム =====*/
         function getPath(nodeId) {
             const path = [];
             let cur = nodes.find(n => n.id === nodeId);
@@ -334,7 +403,6 @@
             const baseNodeId = finderSelectedNode ?? selectedNode;
             const path = getPath(baseNodeId);
 
-            // ★ 1つ先の階層まで描画するため +1
             for (let depth = 0; depth <= path.length; depth++) {
                 const col = document.createElement('div');
                 col.style.display = 'inline-block';
@@ -349,20 +417,18 @@
                 let highlightId = null;
 
                 if (depth === 0) {
-                    parentId = null;              // ルート一覧
+                    parentId = null;
                     highlightId = path[0]?.id;
                 } else if (depth < path.length) {
-                    parentId = path[depth - 1].id; // 通常の兄弟
+                    parentId = path[depth - 1].id;
                     highlightId = path[depth]?.id;
                 } else {
-                    // ★ 最後：選択ノードの子一覧
                     parentId = path[path.length - 1].id;
                     highlightId = null;
                 }
 
                 const list = nodes.filter(n => n.parentId === parentId);
 
-                // 空でもカラムは表示（Finderと同じ）
                 if (list.length === 0) {
                     const empty = document.createElement('div');
                     empty.textContent = '（子ノードなし）';
@@ -374,15 +440,12 @@
 
                 list.forEach(n => {
                     const item = document.createElement('div');
+                    item.className = 'column-item';
                     item.textContent = n.text;
-                    item.style.padding = '6px 8px';
-                    item.style.marginBottom = '4px';
-                    item.style.borderRadius = '6px';
-                    item.style.cursor = 'pointer';
-                    item.style.background =
-                        n.id === highlightId || n.id === finderSelectedNode
-                            ? '#c7d2fe'
-                            : 'transparent';
+
+                    if (n.id === highlightId || n.id === finderSelectedNode) {
+                        item.classList.add('selected');
+                    }
 
                     item.onclick = (e) => {
                         e.stopPropagation();
@@ -397,26 +460,29 @@
             }
         }
 
-
-
-
-        /* ===== ドラッグ ===== */
         function startNodeDrag(e, n) {
             e.stopPropagation();
+            const rect = svg.getBoundingClientRect();
+            const x = (e.clientX - rect.left - viewOffset.x) / zoom;
+            const y = (e.clientY - rect.top - viewOffset.y) / zoom;
             draggingNode = n;
-            dragOffset = { x: e.offsetX / zoom - n.x, y: e.offsetY / zoom - n.y };
+            dragOffset = { x: x - n.x, y: y - n.y };
             selectNode(n.id);
         }
 
         svg.onmousedown = e => {
+            if (draggingNode) return;
             draggingCanvas = true;
             dragStart = { x: e.clientX - viewOffset.x, y: e.clientY - viewOffset.y };
         };
 
         window.onmousemove = e => {
             if (draggingNode) {
-                draggingNode.x = e.offsetX / zoom - dragOffset.x;
-                draggingNode.y = e.offsetY / zoom - dragOffset.y;
+                const rect = svg.getBoundingClientRect();
+                const x = (e.clientX - rect.left - viewOffset.x) / zoom;
+                const y = (e.clientY - rect.top - viewOffset.y) / zoom;
+                draggingNode.x = x - dragOffset.x;
+                draggingNode.y = y - dragOffset.y;
                 draw();
             } else if (draggingCanvas) {
                 viewOffset.x = e.clientX - dragStart.x;
@@ -433,8 +499,6 @@
             draggingCanvas = false;
         };
 
-
-        /* ===== 操作 ===== */
         function addChild() {
             const p = nodes.find(n => n.id === selectedNode);
             if (!p) return;
@@ -452,18 +516,20 @@
 
             draw();
             saveData();
+            updateColumns();
         }
 
         function startEdit() {
             const n = nodes.find(n => n.id === selectedNode);
             if (!n) return;
             const t = prompt('編集', n.text);
-            if (t !== null) {
+            if (t !== null && t.trim() !== '') {
                 n.text = t;
                 draw();
                 updateBreadcrumb();
+                updateColumns();
+                saveData();
             }
-            saveData();
         }
 
         function deleteNode() {
@@ -477,19 +543,14 @@
                 actions.style.display = 'none';
                 breadcrumb.style.display = 'none';
                 draw();
+                saveData();
+                updateColumns();
             }
-            saveData();
         }
 
-        /* ===== ズーム ===== */
         function zoomIn() { zoom = Math.min(zoom * 1.2, 3); draw(); }
         function zoomOut() { zoom = Math.max(zoom * 0.8, 0.3); draw(); }
         function resetView() { zoom = 1; viewOffset = { x: 0, y: 0 }; draw(); }
-
-        loadData();
-        selectedNode = 1;
-        draw();
-
 
         const finderOverlay = document.getElementById('finderOverlay');
 
@@ -497,11 +558,10 @@
             finderOverlay.classList.toggle('show');
 
             if (finderOverlay.classList.contains('show')) {
-                finderSelectedNode = selectedNode; // 今の位置から開始
+                finderSelectedNode = selectedNode;
                 updateColumns();
             }
         }
-
 
         window.addEventListener('keydown', e => {
             if (e.key === 'Escape' && finderOverlay.classList.contains('show')) {
@@ -511,21 +571,12 @@
 
         window.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
-
-            // Finderが開いていないなら無視
             if (!finderOverlay.classList.contains('show')) return;
-
-            // 選択されていなければ無視
             if (!finderSelectedNode) return;
 
-            // ① マップ側の選択を確定
             selectNode(finderSelectedNode);
-
-            // ② テレポート
             const node = nodes.find(n => n.id === finderSelectedNode);
             if (node) teleportToNode(node);
-
-            // ③ Finderを閉じる
             toggleFinder();
         });
 
@@ -539,7 +590,78 @@
             draw();
         }
 
+        function exportData() {
+            // 1. nodes配列をJSON文字列に変換
+            const json = JSON.stringify(nodes, null, 2);
 
+            // 2. Blobオブジェクトを作成（JSONファイルとして）
+            const blob = new Blob([json], { type: 'application/json' });
+
+            // 3. ダウンロード用のURLを生成
+            const url = URL.createObjectURL(blob);
+
+            // 4. 非表示のaタグを作成してクリック
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mindmap-' + Date.now() + '.json';  // ファイル名
+            a.click();
+
+            // 5. URLを解放（メモリリーク防止）
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            // 1. ファイルを取得
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 2. FileReaderでファイルを読み込み
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    // 3. JSON文字列をパース
+                    const importedNodes = JSON.parse(e.target.result);
+
+                    // 4. データの検証（最低限のチェック）
+                    if (!Array.isArray(importedNodes)) {
+                        alert('無効なファイル形式です');
+                        return;
+                    }
+
+                    // 5. データを適用
+                    nodes = importedNodes;
+
+                    // 6. nextIdを更新（重要！）
+                    nextId = Math.max(...nodes.map(n => n.id)) + 1;
+
+                    // 7. 選択をリセット
+                    selectedNode = 1;
+
+                    // 8. 画面を再描画
+                    draw();
+
+                    // 9. LocalStorageにも保存
+                    saveData();
+
+                    alert('インポートが完了しました');
+
+                } catch (error) {
+                    alert('ファイルの読み込みに失敗しました: ' + error.message);
+                }
+
+                // 10. inputをリセット（同じファイルを再選択できるように）
+                event.target.value = '';
+            };
+
+            // 11. ファイルをテキストとして読み込み開始
+            reader.readAsText(file);
+        }
+
+        // 初期化
+        loadData();
+        selectedNode = 1;
+        draw();
     </script>
 </body>
 
