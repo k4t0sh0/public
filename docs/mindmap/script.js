@@ -3,15 +3,17 @@ let nodes = [{ id: 1, text: 'メインアイデア', x: 400, y: 300, parentId: n
 let nextId = 2, selectedNode = null, draggingNode = null, dragOffset = { x: 0, y: 0 };
 let viewOffset = { x: 0, y: 0 }, zoom = 1, draggingCanvas = false, dragStart = { x: 0, y: 0 };
 let finderSelectedNode = null;
+let searchResults = [], currentSearchIndex = -1, searchQuery = '';
 
 const svg = document.getElementById('svg');
 const view = document.getElementById('view');
 const actions = document.getElementById('actions');
 const deleteBtn = document.getElementById('deleteBtn');
 const breadcrumb = document.getElementById('breadcrumb');
+const searchInput = document.getElementById('searchInput');
+const searchResultsSpan = document.getElementById('searchResults');
 
 function splitText(text, maxLen) {
-    // 句読点や助詞で区切りやすい位置を優先
     const delimiters = ['、', '。', 'て、', 'が', 'を', 'に', 'は', 'の'];
     const result = [];
     let remaining = text;
@@ -22,11 +24,9 @@ function splitText(text, maxLen) {
             break;
         }
 
-        // maxLen以内で最適な区切り位置を探す
         let splitPos = maxLen;
         let foundDelimiter = false;
 
-        // 句読点を優先的に探す
         for (let i = Math.min(maxLen, remaining.length) - 1; i >= Math.max(0, maxLen - 4); i--) {
             const char = remaining[i];
             if (delimiters.some(d => remaining.substring(i, i + d.length) === d)) {
@@ -37,7 +37,6 @@ function splitText(text, maxLen) {
             }
         }
 
-        // 句読点がなければそのまま切る
         if (!foundDelimiter) {
             splitPos = maxLen;
         }
@@ -69,11 +68,16 @@ function draw() {
     view.setAttribute('transform', `translate(${viewOffset.x},${viewOffset.y}) scale(${zoom})`);
 }
 
+function highlightText(text, query) {
+    if (!query) return text;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<span class="highlight-text">$1</span>');
+}
+
 function drawRoot(n) {
     const maxWidth = 150;
     const maxHeight = 90;
 
-    // 文字数に応じて高さを計算
     const charCount = n.text.length;
     const estimatedLines = Math.ceil(charCount / 10);
     const calculatedHeight = Math.min(Math.max(50, estimatedLines * 18 + 20), maxHeight);
@@ -115,7 +119,13 @@ function drawRoot(n) {
     div.style.padding = '8px';
     div.style.wordBreak = 'break-all';
     div.style.overflow = 'hidden';
-    div.textContent = n.text;
+
+    // 検索クエリがある場合はハイライト表示
+    if (searchQuery && n.text.toLowerCase().includes(searchQuery.toLowerCase())) {
+        div.innerHTML = highlightText(n.text, searchQuery);
+    } else {
+        div.textContent = n.text;
+    }
 
     fo.appendChild(div);
     g.appendChild(fo);
@@ -125,7 +135,6 @@ function drawRoot(n) {
 function drawNode(n) {
     const w = 160;
 
-    // 文字数に応じて高さを計算
     const charCount = n.text.length;
     const estimatedLines = Math.ceil(charCount / 14);
     const h = Math.max(50, Math.min(estimatedLines * 18 + 30, 150));
@@ -164,7 +173,13 @@ function drawNode(n) {
     div.style.padding = '10px';
     div.style.wordBreak = 'break-all';
     div.style.overflow = 'hidden';
-    div.textContent = n.text;
+
+    // 検索クエリがある場合はハイライト表示
+    if (searchQuery && n.text.toLowerCase().includes(searchQuery.toLowerCase())) {
+        div.innerHTML = highlightText(n.text, searchQuery);
+    } else {
+        div.textContent = n.text;
+    }
 
     fo.appendChild(div);
     g.appendChild(fo);
@@ -247,7 +262,7 @@ function updateColumns() {
         const list = nodes.filter(n => n.parentId === parentId);
         if (list.length === 0) {
             const empty = document.createElement('div');
-            empty.textContent = '（子ノードなし）';
+            empty.textContent = '(子ノードなし)';
             empty.style.color = '#9ca3af';
             empty.style.fontSize = '13px';
             empty.style.padding = '6px';
@@ -412,7 +427,7 @@ function exportData() {
 function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
-    if (!confirm('現在のデータは上書きされます。インポートを続けますか？')) {
+    if (!confirm('現在のデータは上書きされます。インポートを続けますか?')) {
         event.target.value = '';
         return;
     }
@@ -437,7 +452,7 @@ function importData(event) {
             breadcrumb.style.display = 'none';
             draw();
             saveData();
-            alert('インポートが完了しました！');
+            alert('インポートが完了しました!');
         } catch (error) {
             alert('ファイルの読み込みに失敗しました: ' + error.message);
         }
@@ -449,3 +464,87 @@ function importData(event) {
 loadData();
 selectedNode = 1;
 draw();
+
+// 検索機能
+function performSearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    searchQuery = searchInput.value.trim();
+
+    if (!query) {
+        clearSearch();
+        return;
+    }
+
+    searchResults = nodes.filter(n => n.text.toLowerCase().includes(query)).map(n => n.id);
+    currentSearchIndex = searchResults.length > 0 ? 0 : -1;
+
+    updateSearchResults();
+    if (currentSearchIndex >= 0) {
+        jumpToSearchResult(currentSearchIndex);
+    }
+}
+
+function updateSearchResults() {
+    if (searchResults.length === 0) {
+        searchResultsSpan.textContent = '見つかりません';
+    } else {
+        searchResultsSpan.textContent = `${currentSearchIndex + 1} / ${searchResults.length}`;
+    }
+    draw();
+    updateColumns();
+}
+
+function searchNext() {
+    if (searchResults.length === 0) return;
+    currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+    jumpToSearchResult(currentSearchIndex);
+    updateSearchResults();
+}
+
+function searchPrev() {
+    if (searchResults.length === 0) return;
+    currentSearchIndex = (currentSearchIndex -
+        1 + searchResults.length) % searchResults.length;
+    jumpToSearchResult(currentSearchIndex);
+    updateSearchResults();
+}
+
+function jumpToSearchResult(index) {
+    if (index < 0 || index >= searchResults.length) return;
+    const nodeId = searchResults[index];
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+        selectNode(nodeId);
+        setTimeout(() => {
+            teleportToNode(node);
+        }, 10);
+    }
+}
+
+function clearSearch() {
+    searchInput.value = '';
+    searchResults = [];
+    currentSearchIndex = -1;
+    searchQuery = '';
+    searchResultsSpan.textContent = '';
+    draw();
+    updateColumns();
+}
+
+searchInput.addEventListener('input', performSearch);
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.shiftKey ? searchPrev() : searchNext();
+    } else if (e.key === 'Escape') {
+        clearSearch();
+        searchInput.blur();
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+    }
+});
