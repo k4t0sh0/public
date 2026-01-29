@@ -276,8 +276,8 @@ function updateColumns() {
 }
 
 function startNodeDrag(e, n) {
-    e.stopPropagation();
-    e.preventDefault(); // タッチスクロールを防止
+    e.stopPropagation(); // イベント伝播を止める
+    e.preventDefault(); // デフォルト動作を防止
 
     const coords = getEventCoords(e);
     const rect = svg.getBoundingClientRect();
@@ -288,9 +288,8 @@ function startNodeDrag(e, n) {
     selectNode(n.id);
 }
 
-// 既存のsvg.onmousedownを置き換え
 function handleCanvasStart(e) {
-    if (draggingNode) return;
+    if (draggingNode) return; // ノードドラッグ中は何もしない
 
     // ピンチズームの検出
     if (e.touches && e.touches.length === 2) {
@@ -301,13 +300,14 @@ function handleCanvasStart(e) {
         return;
     }
 
+    // シングルタッチまたはマウス
     const coords = getEventCoords(e);
     draggingCanvas = true;
     dragStart = { x: coords.x - viewOffset.x, y: coords.y - viewOffset.y };
 }
 
-svg.onmousedown = handleCanvasStart;
-svg.ontouchstart = handleCanvasStart;
+svg.addEventListener('mousedown', handleCanvasStart);
+svg.addEventListener('touchstart', handleCanvasStart, { passive: false });
 
 svg.addEventListener('wheel', e => {
     e.preventDefault();
@@ -324,7 +324,8 @@ svg.addEventListener('wheel', e => {
     draw();
 }, { passive: false });
 
-// 既存のwindow.onmousemoveを置き換え
+// 既存の window.onmousemove = ... を削除して、以下に置き換え
+
 function handleMove(e) {
     // ピンチズーム処理
     if (e.touches && e.touches.length === 2) {
@@ -371,10 +372,10 @@ function handleMove(e) {
     }
 }
 
-window.onmousemove = handleMove;
-window.ontouchmove = handleMove;
+window.addEventListener('mousemove', handleMove);
+window.addEventListener('touchmove', handleMove, { passive: false });
 
-// 既存のwindow.onmouseupを置き換え
+
 function handleEnd(e) {
     if (draggingNode) saveData();
     draggingNode = null;
@@ -382,9 +383,9 @@ function handleEnd(e) {
     lastTouchDistance = 0;
 }
 
-window.onmouseup = handleEnd;
-window.ontouchend = handleEnd;
-window.ontouchcancel = handleEnd; // タッチがキャンセルされた時も対応
+window.addEventListener('mouseup', handleEnd);
+window.addEventListener('touchend', handleEnd);
+window.addEventListener('touchcancel', handleEnd);
 
 function addChild() {
     const p = nodes.find(n => n.id === selectedNode);
@@ -461,14 +462,12 @@ function teleportToNode(node) {
 }
 
 //タップ操作
-// イベントから座標を取得(マウス/タッチ両対応)
 function getEventCoords(e) {
     if (e.touches && e.touches.length > 0) {
         return { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
     return { x: e.clientX, y: e.clientY };
 }
-
 
 function exportData() {
     const json = JSON.stringify(nodes, null, 2);
