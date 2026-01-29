@@ -10,15 +10,6 @@
 
 <body>
     <div id="app">
-        <!-- 検索パネル -->
-        <div class="search-panel">
-            <input type="text" id="searchInput" class="search-input" placeholder="ノードを検索 (Cmd/Ctrl + F)">
-            <button style="background:#6366f1" onclick="searchPrev()">◀</button>
-            <button style="background:#6366f1" onclick="searchNext()">▶</button>
-            <span id="searchResults" class="search-results"></span>
-            <button style="background:#64748b" onclick="clearSearch()">×</button>
-        </div>
-
         <div class="panel" style="top:16px;right:16px;display:flex;gap:4px">
             <button style="background:#64748b" onclick="zoomIn()" title="ズームイン">+</button>
             <button style="background:#64748b" onclick="zoomOut()" title="ズームアウト">−</button>
@@ -52,7 +43,6 @@
         </div>
         <button id="finderBtn" onclick="toggleFinder()">一覧</button>
     </div>
-
     <script src="script.js"></script>
 </body>
 

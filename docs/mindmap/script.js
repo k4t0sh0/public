@@ -3,17 +3,17 @@ let nodes = [{ id: 1, text: 'メインアイデア', x: 400, y: 300, parentId: n
 let nextId = 2, selectedNode = null, draggingNode = null, dragOffset = { x: 0, y: 0 };
 let viewOffset = { x: 0, y: 0 }, zoom = 1, draggingCanvas = false, dragStart = { x: 0, y: 0 };
 let finderSelectedNode = null;
-let searchResults = [], currentSearchIndex = -1, searchQuery = '';
+// 既存の変数の下に追加
+let lastTouchDistance = 0;
 
 const svg = document.getElementById('svg');
 const view = document.getElementById('view');
 const actions = document.getElementById('actions');
 const deleteBtn = document.getElementById('deleteBtn');
 const breadcrumb = document.getElementById('breadcrumb');
-const searchInput = document.getElementById('searchInput');
-const searchResultsSpan = document.getElementById('searchResults');
 
 function splitText(text, maxLen) {
+    // 句読点や助詞で区切りやすい位置を優先
     const delimiters = ['、', '。', 'て、', 'が', 'を', 'に', 'は', 'の'];
     const result = [];
     let remaining = text;
@@ -24,9 +24,11 @@ function splitText(text, maxLen) {
             break;
         }
 
+        // maxLen以内で最適な区切り位置を探す
         let splitPos = maxLen;
         let foundDelimiter = false;
 
+        // 句読点を優先的に探す
         for (let i = Math.min(maxLen, remaining.length) - 1; i >= Math.max(0, maxLen - 4); i--) {
             const char = remaining[i];
             if (delimiters.some(d => remaining.substring(i, i + d.length) === d)) {
@@ -37,6 +39,7 @@ function splitText(text, maxLen) {
             }
         }
 
+        // 句読点がなければそのまま切る
         if (!foundDelimiter) {
             splitPos = maxLen;
         }
@@ -68,16 +71,11 @@ function draw() {
     view.setAttribute('transform', `translate(${viewOffset.x},${viewOffset.y}) scale(${zoom})`);
 }
 
-function highlightText(text, query) {
-    if (!query) return text;
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<span class="highlight-text">$1</span>');
-}
-
 function drawRoot(n) {
     const maxWidth = 150;
     const maxHeight = 90;
 
+    // 文字数に応じて高さを計算
     const charCount = n.text.length;
     const estimatedLines = Math.ceil(charCount / 10);
     const calculatedHeight = Math.min(Math.max(50, estimatedLines * 18 + 20), maxHeight);
@@ -85,6 +83,7 @@ function drawRoot(n) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.style.cursor = 'pointer';
     g.onmousedown = ev => startNodeDrag(ev, n);
+    g.ontouchstart = ev => startNodeDrag(ev, n); // この行を追加
 
     const rx = 80;
     const ry = Math.max(35, calculatedHeight / 2);
@@ -119,13 +118,7 @@ function drawRoot(n) {
     div.style.padding = '8px';
     div.style.wordBreak = 'break-all';
     div.style.overflow = 'hidden';
-
-    // 検索クエリがある場合はハイライト表示
-    if (searchQuery && n.text.toLowerCase().includes(searchQuery.toLowerCase())) {
-        div.innerHTML = highlightText(n.text, searchQuery);
-    } else {
-        div.textContent = n.text;
-    }
+    div.textContent = n.text;
 
     fo.appendChild(div);
     g.appendChild(fo);
@@ -135,6 +128,7 @@ function drawRoot(n) {
 function drawNode(n) {
     const w = 160;
 
+    // 文字数に応じて高さを計算
     const charCount = n.text.length;
     const estimatedLines = Math.ceil(charCount / 14);
     const h = Math.max(50, Math.min(estimatedLines * 18 + 30, 150));
@@ -142,6 +136,7 @@ function drawNode(n) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.style.cursor = 'pointer';
     g.onmousedown = ev => startNodeDrag(ev, n);
+    g.ontouchstart = ev => startNodeDrag(ev, n); // この行を追加
 
     const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     r.setAttribute('x', n.x - w / 2); r.setAttribute('y', n.y - h / 2);
@@ -173,13 +168,7 @@ function drawNode(n) {
     div.style.padding = '10px';
     div.style.wordBreak = 'break-all';
     div.style.overflow = 'hidden';
-
-    // 検索クエリがある場合はハイライト表示
-    if (searchQuery && n.text.toLowerCase().includes(searchQuery.toLowerCase())) {
-        div.innerHTML = highlightText(n.text, searchQuery);
-    } else {
-        div.textContent = n.text;
-    }
+    div.textContent = n.text;
 
     fo.appendChild(div);
     g.appendChild(fo);
@@ -262,7 +251,7 @@ function updateColumns() {
         const list = nodes.filter(n => n.parentId === parentId);
         if (list.length === 0) {
             const empty = document.createElement('div');
-            empty.textContent = '(子ノードなし)';
+            empty.textContent = '（子ノードなし）';
             empty.style.color = '#9ca3af';
             empty.style.fontSize = '13px';
             empty.style.padding = '6px';
@@ -288,19 +277,37 @@ function updateColumns() {
 
 function startNodeDrag(e, n) {
     e.stopPropagation();
+    e.preventDefault(); // タッチスクロールを防止
+
+    const coords = getEventCoords(e);
     const rect = svg.getBoundingClientRect();
-    const x = (e.clientX - rect.left - viewOffset.x) / zoom;
-    const y = (e.clientY - rect.top - viewOffset.y) / zoom;
+    const x = (coords.x - rect.left - viewOffset.x) / zoom;
+    const y = (coords.y - rect.top - viewOffset.y) / zoom;
     draggingNode = n;
     dragOffset = { x: x - n.x, y: y - n.y };
     selectNode(n.id);
 }
 
-svg.onmousedown = e => {
+// 既存のsvg.onmousedownを置き換え
+function handleCanvasStart(e) {
     if (draggingNode) return;
+
+    // ピンチズームの検出
+    if (e.touches && e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+        return;
+    }
+
+    const coords = getEventCoords(e);
     draggingCanvas = true;
-    dragStart = { x: e.clientX - viewOffset.x, y: e.clientY - viewOffset.y };
-};
+    dragStart = { x: coords.x - viewOffset.x, y: coords.y - viewOffset.y };
+}
+
+svg.onmousedown = handleCanvasStart;
+svg.ontouchstart = handleCanvasStart;
 
 svg.addEventListener('wheel', e => {
     e.preventDefault();
@@ -317,26 +324,67 @@ svg.addEventListener('wheel', e => {
     draw();
 }, { passive: false });
 
-window.onmousemove = e => {
+// 既存のwindow.onmousemoveを置き換え
+function handleMove(e) {
+    // ピンチズーム処理
+    if (e.touches && e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (lastTouchDistance > 0) {
+            const rect = svg.getBoundingClientRect();
+            const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+            const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+            const worldX = (centerX - viewOffset.x) / zoom;
+            const worldY = (centerY - viewOffset.y) / zoom;
+
+            const zoomFactor = distance / lastTouchDistance;
+            const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.3), 3);
+
+            viewOffset.x = centerX - worldX * newZoom;
+            viewOffset.y = centerY - worldY * newZoom;
+            zoom = newZoom;
+            draw();
+        }
+
+        lastTouchDistance = distance;
+        return;
+    }
+
+    const coords = getEventCoords(e);
+
     if (draggingNode) {
+        e.preventDefault();
         const rect = svg.getBoundingClientRect();
-        const x = (e.clientX - rect.left - viewOffset.x) / zoom;
-        const y = (e.clientY - rect.top - viewOffset.y) / zoom;
+        const x = (coords.x - rect.left - viewOffset.x) / zoom;
+        const y = (coords.y - rect.top - viewOffset.y) / zoom;
         draggingNode.x = x - dragOffset.x;
         draggingNode.y = y - dragOffset.y;
         draw();
     } else if (draggingCanvas) {
-        viewOffset.x = e.clientX - dragStart.x;
-        viewOffset.y = e.clientY - dragStart.y;
+        e.preventDefault();
+        viewOffset.x = coords.x - dragStart.x;
+        viewOffset.y = coords.y - dragStart.y;
         draw();
     }
-};
+}
 
-window.onmouseup = () => {
+window.onmousemove = handleMove;
+window.ontouchmove = handleMove;
+
+// 既存のwindow.onmouseupを置き換え
+function handleEnd(e) {
     if (draggingNode) saveData();
     draggingNode = null;
     draggingCanvas = false;
-};
+    lastTouchDistance = 0;
+}
+
+window.onmouseup = handleEnd;
+window.ontouchend = handleEnd;
+window.ontouchcancel = handleEnd; // タッチがキャンセルされた時も対応
 
 function addChild() {
     const p = nodes.find(n => n.id === selectedNode);
@@ -412,6 +460,16 @@ function teleportToNode(node) {
     draw();
 }
 
+//タップ操作
+// イベントから座標を取得(マウス/タッチ両対応)
+function getEventCoords(e) {
+    if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
+}
+
+
 function exportData() {
     const json = JSON.stringify(nodes, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -427,7 +485,7 @@ function exportData() {
 function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
-    if (!confirm('現在のデータは上書きされます。インポートを続けますか?')) {
+    if (!confirm('現在のデータは上書きされます。インポートを続けますか？')) {
         event.target.value = '';
         return;
     }
@@ -452,7 +510,7 @@ function importData(event) {
             breadcrumb.style.display = 'none';
             draw();
             saveData();
-            alert('インポートが完了しました!');
+            alert('インポートが完了しました！');
         } catch (error) {
             alert('ファイルの読み込みに失敗しました: ' + error.message);
         }
@@ -464,87 +522,3 @@ function importData(event) {
 loadData();
 selectedNode = 1;
 draw();
-
-// 検索機能
-function performSearch() {
-    const query = searchInput.value.trim().toLowerCase();
-    searchQuery = searchInput.value.trim();
-
-    if (!query) {
-        clearSearch();
-        return;
-    }
-
-    searchResults = nodes.filter(n => n.text.toLowerCase().includes(query)).map(n => n.id);
-    currentSearchIndex = searchResults.length > 0 ? 0 : -1;
-
-    updateSearchResults();
-    if (currentSearchIndex >= 0) {
-        jumpToSearchResult(currentSearchIndex);
-    }
-}
-
-function updateSearchResults() {
-    if (searchResults.length === 0) {
-        searchResultsSpan.textContent = '見つかりません';
-    } else {
-        searchResultsSpan.textContent = `${currentSearchIndex + 1} / ${searchResults.length}`;
-    }
-    draw();
-    updateColumns();
-}
-
-function searchNext() {
-    if (searchResults.length === 0) return;
-    currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
-    jumpToSearchResult(currentSearchIndex);
-    updateSearchResults();
-}
-
-function searchPrev() {
-    if (searchResults.length === 0) return;
-    currentSearchIndex = (currentSearchIndex -
-        1 + searchResults.length) % searchResults.length;
-    jumpToSearchResult(currentSearchIndex);
-    updateSearchResults();
-}
-
-function jumpToSearchResult(index) {
-    if (index < 0 || index >= searchResults.length) return;
-    const nodeId = searchResults[index];
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-        selectNode(nodeId);
-        setTimeout(() => {
-            teleportToNode(node);
-        }, 10);
-    }
-}
-
-function clearSearch() {
-    searchInput.value = '';
-    searchResults = [];
-    currentSearchIndex = -1;
-    searchQuery = '';
-    searchResultsSpan.textContent = '';
-    draw();
-    updateColumns();
-}
-
-searchInput.addEventListener('input', performSearch);
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.shiftKey ? searchPrev() : searchNext();
-    } else if (e.key === 'Escape') {
-        clearSearch();
-        searchInput.blur();
-    }
-});
-
-window.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault();
-        searchInput.focus();
-        searchInput.select();
-    }
-});
