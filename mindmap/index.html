@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Map</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="panel" style="top:16px;right:16px;display:flex;gap:4px">
+            <button style="background:#64748b" onclick="zoomIn()" title="ズームイン">+</button>
+            <button style="background:#64748b" onclick="zoomOut()" title="ズームアウト">−</button>
+            <button style="background:#64748b" onclick="resetView()" title="リセット">⟳</button>
+            <button style="background:#3b82f6" onclick="exportData()" title="エクスポート">💾</button>
+            <button style="background:#10b981" onclick="document.getElementById('importFile').click()"
+                title="インポート">📂</button>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        <svg id="svg">
+            <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="1" cy="1" r="1" fill="#e5e7eb" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            <g id="view"></g>
+        </svg>
+        <div id="breadcrumb" class="panel" style="top:80px;left:16px;display:none"></div>
+        <div id="actions" class="panel" style="bottom:24px;left:50%;transform:translateX(-50%);display:none;gap:8px">
+            <button style="background:#6366f1" onclick="addChild()">追加</button>
+            <button style="background:#10b981" onclick="startEdit()">編集</button>
+            <button id="deleteBtn" style="background:#ef4444" onclick="deleteNode()">削除</button>
+        </div>
+        <div id="finderOverlay">
+            <div id="finderHeader">
+                <span>ノード一覧</span>
+                <button onclick="toggleFinder()" style="background:#64748b">×</button>
+            </div>
+            <div id="columns"></div>
+        </div>
+        <button id="finderBtn" onclick="toggleFinder()">一覧</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

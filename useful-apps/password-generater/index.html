@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>パスワード作成</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="password-generater.ico" type="image/x-icon">
+</head>
+
+<body>
+
+  <div class="macos-window-bar">
+    <div class="macos-buttons">
+      <span class="macos-btn close" onclick="history.back()"></span>
+      <span class="macos-btn minimize" onclick="history.back()"></span>
+      <span class="macos-btn maximize" onclick="toggleFullScreen()"></span>
+    </div>
+    <div class="macos-title-container">
+      <div class="macos-address-bar">
+        <span class="lock-icon">🔒</span>
+        <span class="address-text">password-generater.com — パスワードジェネレータ</span>
+      </div>
+    </div>
+    <div class="macos-actions-spacer"></div>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="glass-container">
+      <div class="checkboxes">
+        <label><input type="checkbox" id="uppercase" checked> 大文字</label>
+        <label><input type="checkbox" id="lowercase" checked> 小文字</label>
+        <label><input type="checkbox" id="numbers" checked> 数字</label>
+        <label><input type="checkbox" id="symbols" checked> 記号</label>
+      </div>
+      文字数 <input type="number" id="length" min="4" max="64" value="10"><br>
+      生成数 <input type="number" id="count" min="1" max="20" value="5"><br>
+      <input type="button" id="generate" class="generate" value="生成する">
+      <input type="button" id="btn" class="copyButton" value="すべてコピー">
+      <div class="result-container">
+        <ul id="resultList" class="result"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="script.js"></script>
+
+  <script>
+    // ページ読み込み時にデフォルトのパスワードを生成
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("generate").click();
+    });
+  </script>
+
+</body>
+
+</html>
